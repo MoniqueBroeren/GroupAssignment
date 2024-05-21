@@ -15,3 +15,6 @@ smi = Chem.MolToSmiles(mol)
 print(smi)
 
 # Dit is een test
+#lkjlaksjdf
+#lasjd;ladkjf
+#ahldfka
