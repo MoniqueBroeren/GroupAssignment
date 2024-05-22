@@ -16,7 +16,3 @@ print(smi)
 
 # Dit is een test
 #testest
-
-#;jsldkjgojojk
-#;lsjf[aojefd
-#;j[aowjef
