@@ -1,6 +1,18 @@
+import rdkit
+from rdkit import Chem
+from rdkit.Chem import AllChem
 
-# Sanne probeert even GIT uit :)
+from rdkit.Chem import Draw
+#from rdkit.Chem.Draw import IPythonConsole
 
-# Sanne heeft uitgevonden hoe ze direct hierin kan werken in Visual studio code woohoo
+print(rdkit.__version__)
 
-# even kijken of het nienke ook lukt? (Spannend)
+smiles = 'COC(=O)c1c[nH]c2cc(OC(C)C)c(OC(C)C)cc2c1=O'
+mol = Chem.MolFromSmiles(smiles)
+print(mol)
+
+smi = Chem.MolToSmiles(mol)
+print(smi)
+
+# Dit is een test
+#testest
