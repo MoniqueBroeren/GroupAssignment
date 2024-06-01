@@ -6,6 +6,7 @@ from rdkit.Chem import AllChem
 from rdkit.Chem import Draw
 from rdkit.ML.Descriptors import MoleculeDescriptors
 from rdkit.Chem import Descriptors
+from scipy.stats import shapiro
 
 
 def read_data(infile):
@@ -48,6 +49,15 @@ def create_dataframe(df_raw):
     expanded_df = pd.concat([df_raw, descriptor_df], axis=1)
 
     return expanded_df
+
+
+# Functie om kolommen te testen op normaal verdeeldheid
+def check_normality(df):
+    normality_results = {}
+    for column in df.columns:
+        stat, p_value = shapiro(df[column].dropna())  # dropna om NaN-waarden te verwijderen
+        normality_results[column] = p_value
+    return normality_results
 
 
 # Extract all descriptors
