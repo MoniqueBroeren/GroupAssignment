@@ -12,8 +12,9 @@ from scipy.stats import shapiro
 def read_data(infile):
     """
     Reads the input (.csv) file.
-    :param infile: (str) of the path where the file is located
-    :return: (pandas dataframe) of the raw data
+
+    Parameters: infile (str)       - path where the file is located
+    Returns:    df_raw (DataFrame) - consists of raw data that was in the file
     """
     df_raw = pd.read_csv(infile)
     return df_raw
@@ -22,12 +23,14 @@ def read_data(infile):
 def calculate_descriptors(smile):
     """
     Calculates the descriptors for the given smiles.
-    :param smile: (str) of the smile
-    :return: (list) of all the descriptors
+
+    Parameters: smile (str) - SMILES string of molecule
+    Returns:    list (list) - list of all values that describe the molecule. If there is
+                              no molecule, None returns.
     """
-    # Extract the molecule
+    # extract the molecule
     mol = Chem.MolFromSmiles(smile)
-    # If no molecule found return None
+    # if no molecule found return None
     if mol is None:
         return [None] * len(descriptor_names)
     return list(calculator.CalcDescriptors(mol))
@@ -36,8 +39,10 @@ def calculate_descriptors(smile):
 def create_dataframe(df_raw):
     """
     Creates a dataframe containing all the descriptors of all the smiles.
-    :param df_raw: (pandas dataframe) of the raw data
-    :return: (pandas dataframe) the expanded dataframe containing all the descriptors of all the smiles
+
+    Parameters: df_raw (DataFrame)      - contains all the raw data
+    Returns:    expanded_df (DataFrame) - contains all the raw data and the calculated
+                                          molecule descriptor data
     """
     # Calculate descriptors for each molecule
     descriptor_data = df_raw['SMILES'].apply(calculate_descriptors)
@@ -51,11 +56,18 @@ def create_dataframe(df_raw):
     return expanded_df
 
 
-# Functie om kolommen te testen op normaal verdeeldheid
 def check_normality(df):
+    """ Checks if values in columns are distributed normally.
+    
+    Parameters: df (DataFrame)           - dataframe for which you want to check if columns are
+                                           distributed normally
+    Returns:    normality_results (dict) - for each column (as key), the corresponding p-value
+                                           is given 
+    """
+
     normality_results = {}
     for column in df.columns:
-        stat, p_value = shapiro(df[column].dropna())  # dropna om NaN-waarden te verwijderen
+        stat, p_value = shapiro(df[column].dropna())  # remove NaN values
         normality_results[column] = p_value
     return normality_results
 
