@@ -20,51 +20,58 @@ def read_data(infile):
     return df_raw
 
 
-def calculate_descriptors(smile):
+def calculate_descriptors_and_fingerprints(smile):
     """
-    Calculates the descriptors for the given smiles.
+    Calculates the descriptors and fingerprints for the given SMILES.
 
     Parameters: smile (str) - SMILES string of molecule
-    Returns:    list (list) - list of all values that describe the molecule. If there is
-                              no molecule, None returns.
+    Returns:    descriptors_and_fp (list) - list of all values that describe the molecule and its binary fingerprints.
     """
-    # extract the molecule
+    # Extract the molecule
     mol = Chem.MolFromSmiles(smile)
-    # if no molecule found return None
+
+    # If no molecule found, return None
     if mol is None:
-        return [None] * len(descriptor_names)
-    return list(calculator.CalcDescriptors(mol))
+        return [None] * len(descriptor_names) + [None] * nBits
+
+    # Calculate descriptors
+    descriptors = list(calculator.CalcDescriptors(mol))
+
+    # Calculate binary fingerprints
+    fp = AllChem.GetMorganFingerprintAsBitVect(mol, 2, nBits=nBits)
+    fingerprints = list(fp)
+
+    return descriptors + fingerprints
 
 
 def create_dataframe(df_raw):
     """
-    Creates a dataframe containing all the descriptors of all the smiles.
+    Creates a dataframe containing all the descriptors and fingerprints of all the SMILES.
 
     Parameters: df_raw (DataFrame)      - contains all the raw data
     Returns:    expanded_df (DataFrame) - contains all the raw data and the calculated
-                                          molecule descriptor data
+                                          molecule descriptor and fingerprint data
     """
-    # Calculate descriptors for each molecule
-    descriptor_data = df_raw['SMILES'].apply(calculate_descriptors)
+    # Calculate descriptors and fingerprints for each molecule
+    descriptor_fp_data = df_raw['SMILES'].apply(calculate_descriptors_and_fingerprints)
 
-    # Create a DataFrame with descriptor data
-    descriptor_df = pd.DataFrame(descriptor_data.tolist(), columns=descriptor_names)
+    # Create a DataFrame with descriptor and fingerprint data
+    descriptor_fp_df = pd.DataFrame(descriptor_fp_data.tolist(), columns=descriptor_names + fingerprint_names)
 
-    # Combine the original DataFrame with the descriptor DataFrame
-    expanded_df = pd.concat([df_raw, descriptor_df], axis=1)
+    # Combine the original DataFrame with the descriptor and fingerprint DataFrame
+    expanded_df = pd.concat([df_raw, descriptor_fp_df], axis=1)
 
     return expanded_df
 
 
 def check_normality(df):
     """ Checks if values in columns are distributed normally.
-    
+
     Parameters: df (DataFrame)           - dataframe for which you want to check if columns are
                                            distributed normally
     Returns:    normality_results (dict) - for each column (as key), the corresponding p-value
-                                           is given 
+                                           is given
     """
-
     normality_results = {}
     for column in df.columns:
         stat, p_value = shapiro(df[column].dropna())  # remove NaN values
@@ -75,13 +82,16 @@ def check_normality(df):
 # Extract all descriptors
 descriptor_names = [desc[0] for desc in Descriptors._descList]
 
+# Number of bits for the binary fingerprints
+nBits = 1024  # Default number of bits
+fingerprint_names = [f'Bit_{i}' for i in range(nBits)]
+
 # Create a MolecularDescriptorCalculator
-calculator = MoleculeDescriptors.MolecularDescriptorCalculator(descriptor_names)  # Calculate to integers
+calculator = MoleculeDescriptors.MolecularDescriptorCalculator(descriptor_names)
 
 # Read file
 input_file = 'tested_molecules.csv'
-create_dataframe(read_data(input_file))
-
 expanded_df = create_dataframe(read_data(input_file))
 
 print(expanded_df.head())
+
