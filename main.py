@@ -89,9 +89,9 @@ fingerprint_names = [f'Bit_{i}' for i in range(nBits)]
 # Create a MolecularDescriptorCalculator
 calculator = MoleculeDescriptors.MolecularDescriptorCalculator(descriptor_names)
 
-# Read file
-input_file = 'tested_molecules.csv'
-expanded_df = create_dataframe(read_data(input_file))
+# # Read file
+# input_file = 'tested_molecules.csv'
+# expanded_df = create_dataframe(read_data(input_file))
 
-print(expanded_df.head())
+# print(expanded_df.head())
 
