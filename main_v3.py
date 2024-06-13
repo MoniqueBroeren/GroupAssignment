@@ -17,6 +17,7 @@ from rdkit.ML.Descriptors import MoleculeDescriptors
 from imblearn.over_sampling import SMOTE, RandomOverSampler
 from imblearn.under_sampling import NearMiss, RandomUnderSampler
 
+from sklearn.feature_selection import SelectFromModel
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.decomposition import PCA
 from sklearn.model_selection import train_test_split
@@ -136,6 +137,46 @@ def remove_columns_no_info(df_features):
     return df_features
 
 
+def prefilter_irrelevant_columns(data_raw, df_features):
+
+    # relevant_descriptors = [
+    # 'MolWt', 'MolLogP', 'MolMR', 'TPSA', 'FractionCSP3', 'LabuteASA', 'ExactMolWt',
+    # 'NumHDonors', 'NumHAcceptors', 'NumRotatableBonds', 'RingCount', 'NumAromaticRings', 
+    # 'NumAliphaticRings', 'NumSaturatedRings', 'NumAromaticCarbocycles', 'NumAliphaticCarbocycles',
+    # 'NumAromaticHeterocycles', 'NumAliphaticHeterocycles', 'HallKierAlpha', 'PEOE_VSA1',
+    # 'PEOE_VSA2', 'PEOE_VSA3', 'PEOE_VSA4', 'PEOE_VSA5', 'PEOE_VSA6', 'PEOE_VSA7', 'PEOE_VSA8',
+    # 'PEOE_VSA9', 'PEOE_VSA10', 'PEOE_VSA11', 'PEOE_VSA12', 'BalabanJ', 'BertzCT', 'Chi0', 'Chi1',
+    # 'Chi2n', 'Chi3n', 'Chi4n', 'Chi1v', 'Chi2v', 'Chi3v', 'Chi4v', 'Kappa1', 'Kappa2', 'Kappa3']
+
+    # df_relevant = pd.DataFrame(df_features[relevant_descriptors])
+
+    threshold = 0.8
+    corr_matrix = df_features.iloc[:,1:].corr().abs()
+    upper = corr_matrix.where(np.triu(np.ones(corr_matrix.shape), k=1).astype(bool))
+    to_drop = [column for column in upper.columns if any(upper[column] > threshold)]
+    
+    df_features = df_features.drop(columns=to_drop)
+
+    # seperate features and label
+    X_set = df_features.iloc[:,1:].values # features
+    if label == 'PKM2_inhibition':
+        y_set = data_raw.iloc[:, 1].values
+    if label == 'ERK2_inhibition':
+        y_set = data_raw.iloc[:, 2].values
+
+    # Embedded method: feature selection using RandomForest
+    clf = RandomForestClassifier(n_estimators=100, random_state=42)
+    clf.fit(X_set, y_set)
+    model = SelectFromModel(clf, prefit=True)
+    X_embedded = model.transform(X_set)
+    selected_features = X_set.columns[(model.get_support())]
+    df_embedded = df_features[selected_features]
+
+    return df_embedded
+
+
+
+
 def check_normality(df_features):
     """ Checks if values in columns are distributed normally.
 
@@ -219,38 +260,39 @@ def split_data(df_pc_scores, label, resample_method):
     if label == 'ERK2_inhibition':
         y_set = df_pc_scores.iloc[:, -1].values
     
+    # data split in train and test set
+    X_train, X_test, y_train, y_test = train_test_split(X_set, y_set, test_size=0.2, random_state=42) 
+    
     #random oversampling
     if resample_method == 'random_oversample':
         oversampler = RandomOverSampler(random_state=42)
-        X_set, y_set = oversampler.fit_resample(X_set, y_set)
+        X_train, y_train = oversampler.fit_resample(X_train, y_train)
 
     #random undersampling
     if resample_method == 'random_undersample':
         undersampler = RandomUnderSampler(random_state=42)
-        X_set, y_set = undersampler.fit_resample(X_set, y_set)
+        X_train, y_train = undersampler.fit_resample(X_train, y_train)
 
     #SMOTE
     if resample_method == 'SMOTE':
         smote = SMOTE(random_state=42)
-        X_set, y_set = smote.fit_resample(X_set, y_set)
+        X_train, y_train = smote.fit_resample(X_train, y_train)
 
     #near miss
     if resample_method == 'near_miss':
         near_miss = NearMiss() 
-        X_set, y_set = near_miss.fit_resample(X_set, y_set)
+        X_train, y_train = near_miss.fit_resample(X_train, y_train)
 
     #smote_and_near_miss
     if resample_method == 'smote_and_near_miss':
         # oversample the minority class using SMOTE
         smote = SMOTE(sampling_strategy='minority', random_state=42)
-        X_smote, y_smote = smote.fit_resample(X_set, y_set)
+        X_smote, y_smote = smote.fit_resample(X_train, y_train)
 
         # undersample the majority class using NearMiss
         nearmiss = NearMiss()
-        X_set, y_set = nearmiss.fit_resample(X_smote, y_smote) 
-    
-    # data split in train and test set
-    X_train, X_test, y_train, y_test = train_test_split(X_set, y_set, test_size=0.2, random_state=42)  
+        X_train, y_train = nearmiss.fit_resample(X_smote, y_smote) 
+     
        
     return X_train, X_test, y_train, y_test
 
@@ -376,9 +418,9 @@ if __name__ == '__main__':
 
     # VARIABLES TO SET / CAN BE MODITIED
     use_fingerprints = True
-    add_binarized_columns = False
-    cum_var_threshold = 0.8
-    label = 'ERK2_inhibition' # options: 'PKM2_inhibition', 'ERK2_inhibition' 
+    add_binarized_columns = True
+    cum_var_threshold = 0.9
+    label = 'PKM2_inhibition' # options: 'PKM2_inhibition', 'ERK2_inhibition' 
     resample_method = 'smote_and_near_miss' # options: 'random_undersample', 'random_oversample', 'SMOTE', 'near_miss', 'no_resampling', 'smote_and_near_miss'
     classifier_type = 'SVM' # options: 'DT', 'RF', 'LR', 'SVM'
     iterations = 10
@@ -400,6 +442,9 @@ if __name__ == '__main__':
 
     # remove variables that do not provide extra information
     df_features = remove_columns_no_info(df_features)
+
+    # only keep important columns
+    df_features = prefilter_irrelevant_columns(df_all_info, df_features)
 
     # check which columns are normally distributed
     normal_distr_columns = check_normality(df_features.iloc[:, 1:]) #SMILES column cannot be checked for normality
