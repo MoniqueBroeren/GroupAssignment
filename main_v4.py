@@ -1,4 +1,4 @@
-# CODE FOR PKM2
+# CODE FOR ERK2
 
 #import needed libraries
 import os
@@ -183,9 +183,9 @@ def prefilter_irrelevant_columns(data_raw, df_features, label):
     df_features = pd.DataFrame(df_features)
 
     # feature selection with PCA
-    # scaler = MinMaxScaler()
-    # scaled_array = scaler.fit_transform(df_features.iloc[:,1:])
-    # df_features_scaled = pd.DataFrame(scaled_array, columns=df_features.iloc[:,1:].columns)
+    scaler = MinMaxScaler()
+    scaled_array = scaler.fit_transform(df_features.iloc[:,1:])
+    df_features_scaled = pd.DataFrame(scaled_array, columns=df_features.iloc[:,1:].columns)
 
     # pca = PCA()
     # pca.fit(df_features_scaled)
@@ -225,8 +225,7 @@ def prefilter_irrelevant_columns(data_raw, df_features, label):
     # # Filter the DataFrame to keep only the relevant features
     # df_relevant_features = df_features[relevant_features]
 
-    # # Display the resulting DataFrame
-    # df_relevant_features
+    # df_features = df_relevant_features
 
     return df_features
 
