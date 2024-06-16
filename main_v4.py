@@ -449,7 +449,7 @@ if __name__ == '__main__':
     use_fingerprints = False
     add_binarized_columns = False
     cum_var_threshold = 0.8
-    label = 'PKM2_inhibition' # options: 'PKM2_inhibition', 'ERK2_inhibition' 
+    label = 'ERK2_inhibition' # options: 'PKM2_inhibition', 'ERK2_inhibition' 
     resample_method = 'smote_and_near_miss' # options: 'random_undersample', 'random_oversample', 'SMOTE', 'near_miss', 'no_resampling', 'smote_and_near_miss'
     classifier_type = 'SVM' # options: 'DT', 'RF', 'LR', 'SVM'
     iterations = 1
@@ -512,15 +512,16 @@ if __name__ == '__main__':
     new_pca_scores = pca.transform(df_features_scaled_new)
     df_new_pc_scores = pd.DataFrame(new_pca_scores, columns=[f'PC{i+1}' for i in range(num_components)])
 
-    # make new model based on all tested molecules and predict labels untested molecules
-    X_train, y_train = split_data(df_pc_scores_labels, label, resample_method, molecules='untested')
-    y_pred = classifier(X_train, np.array(df_new_pc_scores), y_train, classifier_type)
-
-    # write output 
-    results_df = pd.DataFrame({'SMILES': df_all_info_new.iloc[:,0], 'Prediction': y_pred})
-    output_file = f'predictions_{label}.csv'
-    results_df.to_csv(output_file, index=False, sep=',')
-
+    results = {'SMILES': df_all_info_new.iloc[:,0]}
+    for i in ['PKM2_inhibition', 'ERK2_inhibition']:
+        # make new model based on all tested molecules and predict labels untested molecules
+        # because both inhibitors work best with same settings, seperation of setting settings is not needed 
+        X_train, y_train = split_data(df_pc_scores_labels, i, resample_method, molecules='untested')
+        y_pred = classifier(X_train, np.array(df_new_pc_scores), y_train, classifier_type)
+        results[i] = y_pred
     
-
+    # write output 
+    results_df = pd.DataFrame(results)
+    output_file = 'predictions_untested_molecules.csv'
+    results_df.to_csv(output_file, index=False, sep=',')
 
