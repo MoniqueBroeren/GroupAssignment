@@ -66,7 +66,7 @@ File List:
 4. For more information about the creation process of main.py, view the other files.
 
 
-### METHODOLOGICAL INFORMATION
+## METHODOLOGICAL INFORMATION
 
 1. For the molecules given, features were calculated (so called molecular descriptors, binary fingerprints and 
    binarized molecular descriptors).
