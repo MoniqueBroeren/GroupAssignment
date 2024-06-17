@@ -1,34 +1,34 @@
-GENERAL INFORMATION
+%% GENERAL INFORMATION
 
-Author 1
+Author 1 \n
 Name: Monique Broeren
 Email: m.m.w.broeren@student.tue.nl
 
-Author 2
+Author 2 \n
 Name: Sanne van den Dungen 
 Email: s.k.m.v.d.dungen@student.tue.nl 
 
-Author 3
+Author 3 \n
 Name: Fenna van Hemmen
 Email: f.c.j.v.hemmen@student.tue.nl 
 
-Author 4
+Author 4 \n
 Name: Liza Hoens
 Email: l.hoens@student.tue.nl 
 
-Author 5
+Author 5 \n
 Name: Kaj de Jong
 Email: k.d.jong@student.tue.nl 
 
-Author  6
+Author 6 \n
 Name: Nienke Sengers
 Email: n.c.e.sengers@student.tue.nl 
 
-Author 7
+Author 7 \n
 Name: Ema Topolnjak
 Email: e.topolnjak@student.tue.nl 
 
-Author 8
+Author 8 \n
 Name: Nika Vredenbregt
 Email: n.vredenbregt1@student.tue.nl 
 
@@ -37,7 +37,7 @@ Course: Advanced programming and biomedical data analysis
 Course code: 8CC00
 
 
-DATA & FILE OVERVIEW
+%% DATA & FILE OVERVIEW
 
 File List: 
 main.py                       - This is the main code and was used to receive predictions for PKM2 inhibitor 
