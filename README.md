@@ -1,63 +1,69 @@
-%% GENERAL INFORMATION
+## GENERAL INFORMATION
 
-Author 1 \n
-Name: Monique Broeren
-Email: m.m.w.broeren@student.tue.nl
+Author 1 <br>
+Name: Monique Broeren <br>
+Email: m.m.w.broeren@student.tue.nl <br>
 
-Author 2 \n
-Name: Sanne van den Dungen 
-Email: s.k.m.v.d.dungen@student.tue.nl 
+Author 2 <br>
+Name: Sanne van den Dungen <br>
+Email: s.k.m.v.d.dungen@student.tue.nl <br>
 
-Author 3 \n
-Name: Fenna van Hemmen
-Email: f.c.j.v.hemmen@student.tue.nl 
+Author 3 <br>
+Name: Fenna van Hemmen <br>
+Email: f.c.j.v.hemmen@student.tue.nl <br>
 
-Author 4 \n
-Name: Liza Hoens
-Email: l.hoens@student.tue.nl 
+Author 4 <br>
+Name: Liza Hoens <br>
+Email: l.hoens@student.tue.nl <br>
 
-Author 5 \n
-Name: Kaj de Jong
-Email: k.d.jong@student.tue.nl 
+Author 5 <br>
+Name: Kaj de Jong <br>
+Email: k.d.jong@student.tue.nl <br>
 
-Author 6 \n
-Name: Nienke Sengers
-Email: n.c.e.sengers@student.tue.nl 
+Author 6 <br>
+Name: Nienke Sengers <br>
+Email: n.c.e.sengers@student.tue.nl <br>
 
-Author 7 \n
-Name: Ema Topolnjak
-Email: e.topolnjak@student.tue.nl 
+Author 7 <br>
+Name: Ema Topolnjak <br>
+Email: e.topolnjak@student.tue.nl <br>
 
-Author 8 \n
-Name: Nika Vredenbregt
-Email: n.vredenbregt1@student.tue.nl 
+Author 8 <br>
+Name: Nika Vredenbregt <br>
+Email: n.vredenbregt1@student.tue.nl  <br>
 
-Eindhoven University of Technology
-Course: Advanced programming and biomedical data analysis
-Course code: 8CC00
+Eindhoven University of Technology <br>
+Course: Advanced programming and biomedical data analysis <br>
+Course code: 8CC00 <br>
+Assignment: 4 <br>
+Group: 4 <br>
 
-
-%% DATA & FILE OVERVIEW
+### DATA & FILE OVERVIEW
 
 File List: 
+
 main.py                       - This is the main code and was used to receive predictions for PKM2 inhibitor 
                                 and ERK2 inhibitor. This file is used to receive all results given in the report.
+
 exploring_possibilities.ipynb - This is the file that is used to explore all possibilities for how to predict 
                                 inhibition. 
+
 old_codes                     - This folder contains all old codes. For more details of how main.py and 
                                 exploring_possibilities.ipynb were made, intermediate steps can be found there.
+
 data                          - This folder contains the data that was used to make resuls. The file 
                                 tested_molecules.csv contains molecules with known inhibitions. The file 
-                                untested_molecules.csv contains molecules with unknown inhibitions and for these 
-                                molecules, the inhibition is predicted. 
+                                untested_molecules.csv contains molecules with unknown inhibitions and for these molecules, the inhibition is predicted. 
+
 results                       - This folder contains the results if main.py is run. It consists of confusion 
                                 matrices, cumulative explained variance graphs and a csv-file with the 
                                 predictions of the untested molecules. 
+
 .venv                         - This folder contains the virtual environment. The file requirements.txt in this
                                 folder can be used to make a virtual environment for running this code.
 
 
-TO RUN THIS GITHUB
+### TO RUN THIS GITHUB
 
 1. Make a virtual environment with the requirements.txt file in the .venv folder.
 2. Run main.py. 
@@ -65,7 +71,7 @@ TO RUN THIS GITHUB
 4. For more information about the creation process of main.py, view the other files.
 
 
-METHODOLOGICAL INFORMATION
+### METHODOLOGICAL INFORMATION
 
 1. For the molecules given, features were calculated (so called molecular descriptors, binary fingerprints and 
    binarized molecular descriptors).
