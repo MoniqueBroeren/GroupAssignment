@@ -1,4 +1,4 @@
-## GENERAL INFORMATION
+# GENERAL INFORMATION
 
 Author 1 <br>
 Name: Monique Broeren <br>
@@ -38,32 +38,27 @@ Course code: 8CC00 <br>
 Assignment: 4 <br>
 Group: 4 <br>
 
-### DATA & FILE OVERVIEW
+## DATA & FILE OVERVIEW
 
 File List: 
-
-main.py                       - This is the main code and was used to receive predictions for PKM2 inhibitor 
-                                and ERK2 inhibitor. This file is used to receive all results given in the report.
-
-exploring_possibilities.ipynb - This is the file that is used to explore all possibilities for how to predict 
-                                inhibition. 
-
-old_codes                     - This folder contains all old codes. For more details of how main.py and 
-                                exploring_possibilities.ipynb were made, intermediate steps can be found there.
-
-data                          - This folder contains the data that was used to make resuls. The file 
-                                tested_molecules.csv contains molecules with known inhibitions. The file 
-                                untested_molecules.csv contains molecules with unknown inhibitions and for these molecules, the inhibition is predicted. 
-
-results                       - This folder contains the results if main.py is run. It consists of confusion 
-                                matrices, cumulative explained variance graphs and a csv-file with the 
-                                predictions of the untested molecules. 
-
-.venv                         - This folder contains the virtual environment. The file requirements.txt in this
-                                folder can be used to make a virtual environment for running this code.
+- main.py:  This is the main code and was used to receive predictions for PKM2 inhibitor 
+            and ERK2 inhibitor. This file is used to receive all results given in the report.
+- exploring_possibilities.ipynb: This is the file that is used to explore all possibilities for 
+                                 how to predict inhibition. 
+- old_codes: This folder contains all old codes. For more details of how main.py and 
+             exploring_possibilities.ipynb were made, intermediate steps can be found there.
+- data: This folder contains the data that was used to make resuls. The file 
+        tested_molecules.csv contains molecules with known inhibitions. The file 
+        untested_molecules.csv contains molecules with unknown inhibitions and for these
+        molecules, the inhibition is predicted. 
+- results: This folder contains the results if main.py is run. It consists of confusion 
+           matrices, cumulative explained variance graphs and a csv-file with the 
+           predictions of the untested molecules. 
+- .venv: This folder contains the virtual environment. The file requirements.txt in this
+         folder can be used to make a virtual environment for running this code.
 
 
-### TO RUN THIS GITHUB
+## TO RUN THIS GITHUB
 
 1. Make a virtual environment with the requirements.txt file in the .venv folder.
 2. Run main.py. 
