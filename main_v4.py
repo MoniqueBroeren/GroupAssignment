@@ -1,13 +1,11 @@
 #import needed libraries
-import os
-os.environ['LOKY_MAX_CPU_COUNT'] = '4' #needed to set because of SMOTE
-
 import pandas as pd
 import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
 
 from scipy.stats import shapiro
 
-import rdkit
 from rdkit import Chem
 from rdkit.Chem import AllChem, Descriptors
 from rdkit.ML.Descriptors import MoleculeDescriptors
@@ -16,7 +14,6 @@ from imblearn.over_sampling import SMOTE, RandomOverSampler
 from imblearn.under_sampling import NearMiss, RandomUnderSampler
 
 from sklearn.feature_selection import SelectKBest, f_classif
-from sklearn.feature_selection import VarianceThreshold
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.decomposition import PCA
 from sklearn.model_selection import train_test_split
@@ -24,12 +21,11 @@ from sklearn.svm import SVC
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.tree import DecisionTreeClassifier
-from sklearn.metrics import accuracy_score, confusion_matrix, classification_report, precision_score
+from sklearn.metrics import accuracy_score, confusion_matrix, precision_score
 
 
 def read_data(infile):
-    """
-    Reads the input (.csv) file.
+    """ Reads the input (.csv) file.
 
     Parameters: infile (str)       - path where the file is located
     Returns:    df_raw (DataFrame) - consists of raw data that was in the file
@@ -40,8 +36,7 @@ def read_data(infile):
 
 
 def calculate_descriptors_and_fingerprints(smile, use_descriptors=True, use_fingerprints=False):
-    """
-    Calculates the descriptors and fingerprints for the given SMILES.
+    """ Calculates the descriptors and fingerprints for the given SMILES.
 
     Parameters: smile (str)                - SMILES string of molecule
                 use_desciptors (Boolean)   - adds descriptors as feature of molecule if set True
@@ -79,8 +74,7 @@ def calculate_descriptors_and_fingerprints(smile, use_descriptors=True, use_fing
 
 
 def create_dataframe(df_raw, use_descriptors=True, use_fingerprints=False):
-    """
-    Creates a dataframe containing all the descriptors and fingerprints of all the SMILES.
+    """ Creates a dataframe containing all the descriptors and fingerprints of all the SMILES.
 
     Parameters: df_raw (DataFrame)         - contains all the raw data
                 use_desciptors (Boolean)   - adds descriptors as feature of molecule if set True
@@ -105,8 +99,7 @@ def create_dataframe(df_raw, use_descriptors=True, use_fingerprints=False):
 
 
 def binarizing_columns(df_features):
-    """
-    Add columns to dataframe that have binarized information of columns that have discrete integers.
+    """ Add columns to dataframe that have binarized information of columns that have discrete integers.
 
     Parameters: df_features (DataFrame)           - contains all calculated features
     Returns:    df_features_binarized (DataFrame) - contains all calculated features and the extra binarized columns
@@ -132,8 +125,7 @@ def binarizing_columns(df_features):
 
 
 def remove_columns_no_info(df_features):
-    """
-    Remove columns that only have one value because they do not add extra information.
+    """ Remove columns that only have one value, because they do not add extra information.
 
     Parameters: df_features (DataFrame) - contains all calculated features
     Returns:    df_features (DataFrame) - contains all calculated features without the columns 
@@ -141,7 +133,7 @@ def remove_columns_no_info(df_features):
     """
     # check if there are columns with only the same value
     non_variating_columns = df_features.columns[df_features.nunique()==1].tolist()
-    #print('The columns that only have the same value in them are:', non_variating_columns)
+    # print('The columns that only have the same value in them are:', non_variating_columns)
 
     # remove the columns with only the same value, because molecules cannot be differentiated on those columns
     if len(non_variating_columns) != 0:
@@ -151,24 +143,41 @@ def remove_columns_no_info(df_features):
 
 
 
-def prefilter_irrelevant_columns(df_raw, df_features, label):
+def make_correlation_matrix(df_features, figurename):
+    """ Make a correlation matrix heatmap to see the correlation between the features 
+    based on Spearman test.
+
+    Parameters: df_features (DataFrame) - contains all calculated features
+    Returns:    -
     """
-    Remove columns that do add much extra information based on their correlation with other
+    correlation_matrix = df_features.corr(method = 'spearman')
+
+    # make a heatmap to visualize the correlation matrix
+    plt.figure(figsize=(max(10,int(len(df_features.columns)*0.2)), max(10,int(len(df_features.columns)*0.2))))
+    sns.heatmap(correlation_matrix, cmap='coolwarm', annot=False)
+    plt.title(figurename, fontdict={'fontsize' : max(14,int(len(df_features.columns)*0.4))})
+    plt.savefig(f'results/{figurename}.svg')  # Save as SVG file
+
+
+
+def prefilter_irrelevant_columns(df_raw, df_features, label):
+    """ Remove columns that do add much extra information based on their correlation with other
     columns (columns with correlation higher than 0.8). Also, 5 best features are chosen 
-    based on SelectBestK. 
+    based on SelectKBest. 
 
     Parameters: df_raw (DataFramw)       - consists of raw data that was in input file
                 df_features (DataFrame)  - contains all calculated features
+                label (str)              - what needs to be predicted ('PKM2_inhibition' or 'ERK2_inhibition')
     Returns:    selected_features (list) - contains all features that are used for machine learning
                 df_features (DataFrame)  - contains all data that will be used for machine learning
     """
     # only low correlated feataures are used
     threshold = 0.8
     corr_matrix = df_features.iloc[:,1:].corr().abs()
+    # only check values in upper triangle of correlation matrix to avoid looking at values twice
     upper = corr_matrix.where(np.triu(np.ones(corr_matrix.shape), k=1).astype(bool))
     to_drop = [column for column in upper.columns if any(upper[column] > threshold)]
     df_features = df_features.drop(columns=to_drop)
-    
     
     # only keep 5 best features based on SelectKBest method
     # seperate features and label
@@ -185,12 +194,6 @@ def prefilter_irrelevant_columns(df_raw, df_features, label):
     # get selected features and make dataframe based on that
     selected_features = X_set.columns[selector.get_support()]
     df_features = pd.DataFrame(X_new, columns=selected_features)
-
-
-    # # only high variance features
-    # selector = VarianceThreshold(threshold=(.8 * (1 - .8)))
-    # df_features = selector.fit_transform(df_features)
-    # df_features = pd.DataFrame(df_features)
 
     return selected_features, df_features
 
@@ -214,8 +217,7 @@ def check_normality(df_features):
     
 
 def scale_data(df_features):
-    """
-    Scales all columns with MinMax scaling.
+    """ Scales all columns with MinMax scaling.
 
     Parameters: df_features (DataFrame)        - contains all used features
     Returns:    df_features_scaled (DataFrame) - contains all used features with MinMax scaled values
@@ -228,12 +230,16 @@ def scale_data(df_features):
 
 
 def perform_PCA(df_features_scaled, cum_var_threshold=0.8):
-    """
-    Tests PCA to see how many PCs are needed to capture certain cumulative variance threshold and based on
+    """ Tests PCA to see how many PCs are needed to capture certain cumulative variance threshold and based on
     that, the PCs are calculated.
 
     Parameters: df_features_scaled (DataFrame) - contains all calculated features with MinMax scaled values
-    Returns:    df_pc_scores (DataFrame)       - contains all PCs scores with information that contains
+                cum_var_threshold (float)      - minimal cumulative explained variance of PCs together that 
+                                                 need to be returned
+    Returns:    pca (object)                   - pca object with wanted amount of cumulative explained variance
+                num_components (int)           - number of PCs needed for wanted cumulative explained variance
+                cumulative_variance (array)    - contains all cumulative explained variances
+                df_pc_scores (DataFrame)       - contains all PCs scores with information that contains
                                                  at least a threshold cumulative explained variance together
     """
     # test PCA to see how many PCs are wanted
@@ -241,45 +247,67 @@ def perform_PCA(df_features_scaled, cum_var_threshold=0.8):
 
     # calculate the cummulative explained variance
     cumulative_variance = np.cumsum(pca.explained_variance_ratio_)
-
+  
     # choose amount of principal components based on how much cumulative explained variance is wanted
     num_components = np.argmax(cumulative_variance >= cum_var_threshold) + 1
-    #print(f'The amount of principal components needed to capture at least {round(cum_var_threshold*100)}% variance is {num_components}.')
+    # print(f'The amount of principal components needed to capture at least {round(cum_var_threshold*100)}% variance is {num_components}.')
 
     # apply PCA with the desired number of components
     pca = PCA(n_components=num_components)
     pca_scores = pca.fit_transform(df_features_scaled)
     df_pc_scores = pd.DataFrame(pca_scores, columns=[f'PC{i+1}' for i in range(num_components)])
 
-    return pca, num_components, df_pc_scores
+    return pca, num_components, cumulative_variance, df_pc_scores
 
 
 
-def split_data(df_pc_scores, label, resample_method, molecules='tested'):
+def cumulative_explained_variance_graph(cumulative_variance, cum_var_threshold=0.8):
+    """ Makes a cumulative explained variance graph that explains the PCs.
+
+    Parameters: cumulative_variance (list) - contains all cumulative explained variances
+                cum_var_threshold (float)  - minimal cumulative explained variance of PCs together
+    Returns:    -
     """
-    Splits data in training and test set for machine learning and resamples training data based on 
-    resampling method that is whished for (options: 'random_undersample', 'random_oversample', 
-    'SMOTE', 'near_miss', 'smote_and_near_miss' and 'no_resampling'). Also, which inhibitor needs 
-    to be used as label is defined (options = 'PKM2_inhibition' and 'ERK2_inhibition').
+    plt.figure(figsize=(8, 6))
+    plt.bar(range(1, len(cumulative_variance) + 1), cumulative_variance, alpha=0.5, align='center')
 
-    Parameters: df_pc_scores (DataFrame) - contains all PCs scores with information that contains
-                                           at least a threshold cumulative explained variance together
-                label (str)              - what needs to be predicted ('PKM2_inhibition' or 'ERK2_inhibition')
-                resample_method (str)    - resampling method ('random_undersample', 'random_oversample', 'SMOTE', 
-                                           'near_miss', 'smote_and_near_miss' or 'no_resampling')     
-                moleculues (str)         - choose 'tested' or 'untested' based on if whole 'tested' molecules
-                                           should be trainingset    
-    Returns:    X_train (ndarray)        - features for training set in ML 
-                X_test (ndarray)         - features for test set in ML 
-                y_train (array)          - labels for training set in ML 
-                y_test (array)           - labels for test set in ML 
+    # make a threshold line based on the cumulative explained variance threshold that is chosen
+    cum_var_threshold = 0.8
+    plt.axhline(y=cum_var_threshold,color='r',linestyle='-')
+
+    plt.xlabel('Principal component (PC)')
+    plt.ylabel('Cumulative Explained Variance (%)')
+    plt.title('Cumulative explained variance for each principal component')
+    plt.savefig('results/cumlative_explained_variance_graph.svg')
+
+
+
+def split_data(df_pc_scores_labels, label, resample_method, molecules='tested'):
+    """ Splits data in training and test set for machine learning and resamples training data based 
+    on resampling method that is whished for (options: 'random_undersample', 'random_oversample', 
+    'SMOTE', 'near_miss', 'smote_and_near_miss' and 'no_resampling'). Also, which inhibitor needs 
+    to be used as label is defined (options = 'PKM2_inhibition' and 'ERK2_inhibition'). If molecules
+    is set to 'tested', dataset is split. If molecules is set to 'untested', dataset is not split.
+
+    Parameters: df_pc_scores_labels (DataFrame) - contains all PCs scores with information that contains
+                                                  at least a threshold cumulative explained variance together and
+                                                  labels.
+                label (str)                     - what needs to be predicted ('PKM2_inhibition' or 'ERK2_inhibition')
+                resample_method (str)           - resampling method ('random_undersample', 'random_oversample', 'SMOTE', 
+                                                  'near_miss', 'smote_and_near_miss' or 'no_resampling')     
+                moleculues (str)                - choose 'tested' or 'untested' based on if whole 'tested' molecules
+                                                  should be training set    
+    Returns:    X_train (ndarray)               - features for training set in ML 
+                X_test (ndarray)                - features for test set in ML 
+                y_train (array)                 - labels for training set in ML 
+                y_test (array)                  - labels for test set in ML 
     """
     # seperate features and label
-    X_set = df_pc_scores.iloc[:, :-2].values # features
+    X_set = df_pc_scores_labels.iloc[:, :-2].values # features
     if label == 'PKM2_inhibition':
-        y_set = df_pc_scores.iloc[:, -2].values
+        y_set = df_pc_scores_labels.iloc[:, -2].values
     if label == 'ERK2_inhibition':
-        y_set = df_pc_scores.iloc[:, -1].values
+        y_set = df_pc_scores_labels.iloc[:, -1].values
     
     # data split in train and test set
     if molecules == 'tested':
@@ -318,15 +346,14 @@ def split_data(df_pc_scores, label, resample_method, molecules='tested'):
         X_train, y_train = nearmiss.fit_resample(X_smote, y_smote) 
      
     if molecules == 'tested':
-        return X_train, X_test, y_train, y_test
+        return X_train, X_test, y_train, y_test # returns part of tested molecules as training set and part as test set
     if molecules == 'untested':
-        return X_train, y_train
+        return X_train, y_train # returns whole tested molecules as training set
 
 
 
 def classifier(X_train, X_test, y_train, classifier_type):
-    """
-    Performs machine learning and predicts values for test set based on chosen machine learning algorithm
+    """ Performs machine learning and predicts values for test set based on chosen machine learning algorithm
     (options: decision tree (='DT'), random forest (='RF'), logistic regression ('LR') and support vector
     machine (= 'SVM')).
 
@@ -344,20 +371,20 @@ def classifier(X_train, X_test, y_train, classifier_type):
         threshold = 0.25 # change this variable to different chance thresholds
         y_pred = (y_prob >= threshold).astype(int) # choose value based on threshold
     
-    #decision tree
+    # decision tree
     if classifier_type == 'DT':
         dt = DecisionTreeClassifier(random_state=42) 
         dt.fit(X_train, y_train) 
         y_pred = dt.predict(X_test) 
     
-    #random forest
+    # random forest
     if classifier_type == 'RF':
         num_estimators = 100 # change this variable to test different number of estimators
         rf = RandomForestClassifier(n_estimators=num_estimators, random_state=42) 
         rf.fit(X_train, y_train) 
         y_pred = rf.predict(X_test) 
 
-    #support vector machine
+    # support vector machine
     if classifier_type == 'SVM':
         svm = SVC(kernel='poly')  # you can also try other kernels such as 'rbf', 'poly', etc 
         svm.fit(X_train, y_train) 
@@ -368,30 +395,30 @@ def classifier(X_train, X_test, y_train, classifier_type):
 
 
 def goodness_prediction(y_test, y_pred):
-    """
-    Evaluate ML model.
+    """ Evaluate ML model. 
 
-    Parameters: y_test (array)      - labels for test set in ML
-                y_pred (array)      - labels what ML predicted for test set
-    Returns:    conf_matrix (list)  - confusion matrix
-                accuracy (float)    - accuracy score
-                precision (float)   - precision score
-                sensitivity (float) - sensitivity score
-                specificity (float) - specificity score
+    Parameters: y_test (array)                    - labels for test set in ML
+                y_pred (array)                    - labels what ML predicted for test set
+    Returns:    conf_matrix (list)                - confusion matrix
+                accuracy (float)                  - accuracy score
+                precision (float)                 - precision score
+                sensitivity (float)               - sensitivity score
+                specificity (float)               - specificity score
+                negative_predictive_value (float) - negative predictive value score
     """
     conf_matrix = confusion_matrix(y_test, y_pred) 
     accuracy = accuracy_score(y_test, y_pred) 
     precision = precision_score(y_test, y_pred) 
     sensitivity = conf_matrix[1, 1] / (conf_matrix[1, 1] + conf_matrix[1, 0]) #sensitivity (true positive rate)
     specificity = conf_matrix[0, 0] / (conf_matrix[0, 0] + conf_matrix[0, 1]) #specificity (true negative rate)
+    negative_predictive_value = conf_matrix[1, 1] / (conf_matrix[1, 1] + conf_matrix[1, 0])
 
-    return conf_matrix, accuracy, precision, sensitivity, specificity
+    return conf_matrix, accuracy, precision, sensitivity, specificity, negative_predictive_value
 
 
 
-def average_results_ML_model(df_pc_scores, label, classifier_type, resample_method, iterations=10):
-    """
-    Evaluate chosen ML model ('DT', 'RF', 'LR' or 'SVM') for chosen label ('PKM2_inhibition' or 
+def average_results_ML_model(df_pc_scores, label, classifier_type, resample_method, iterations=50):
+    """ Evaluate chosen ML model ('DT', 'RF', 'LR' or 'SVM') for chosen label ('PKM2_inhibition' or 
     'ERK2_inhibition') after chosen resample method is applied ('random_undersample', 
     'random_oversample', 'SMOTE', 'near_miss', 'smote_and_near_miss' or 'no_resampling'). The 
     average evaluation metrics of the model are returned after number iterations given.
@@ -403,59 +430,60 @@ def average_results_ML_model(df_pc_scores, label, classifier_type, resample_meth
                 classifier_type (str)           - type of ML algorithm that should be done ('DT', 'RF', 'LR' or 'SVM')
                 resample_method (str)           - resampling method ('random_undersample', 'random_oversample', 'SMOTE', 
                                                   'near_miss', 'smote_and_near_miss' or 'no_resampling')   
-                moleculues (str)                - choose 'tested' or 'untested' based on if whole 'tested' molecules
-                                                  should be trainingset  
                 iterations (int)                - number of iterations over which evaluation metrics need to be averaged
     Returns:    avg_accuracy (float)            - average accuracy score
                 avg_precision (float)           - average precision score
                 avg_sensitivity (float)         - average sensitivity score
                 avg_specificity (float)         - average specificity score
+                avg_neg_pred_values (float)     - average negative predictive value score
                 conf_matrix (list)              - confusion matrix of last iteration of model
     """  
-    accuracies, precisions, sensitivities, specificities = [], [], [], []
+    accuracies, precisions, sensitivities, specificities, neg_pred_values = [], [], [], [], []
 
     for i in range(iterations):
+        # make and evaluate model once
         X_train, X_test, y_train, y_test = split_data(df_pc_scores, label, resample_method, molecules = 'tested')
         y_pred = classifier(X_train, X_test, y_train, classifier_type)
-        conf_matrix, accuracy, precision, sensitivity, specificity = goodness_prediction(y_test, y_pred)
+        conf_matrix, accuracy, precision, sensitivity, specificity, neg_pred_value = goodness_prediction(y_test, y_pred)
 
         accuracies.append(accuracy)
         precisions.append(precision)
         sensitivities.append(sensitivity)
         specificities.append(specificity)
+        neg_pred_values.append(neg_pred_value)
 
+    # calculate avarages
     avg_accuracy = sum(accuracies) / iterations
     avg_precision = sum(precisions) / iterations
     avg_sensitivity = sum(sensitivities) / iterations
     avg_specificity = sum(specificities) / iterations
+    avg_neg_pred_values = sum(neg_pred_values) / iterations
 
-    return avg_accuracy, avg_precision, avg_sensitivity, avg_specificity, conf_matrix
+    return avg_accuracy, avg_precision, avg_sensitivity, avg_specificity, avg_neg_pred_values, conf_matrix
 
 
 
 if __name__ == '__main__':
-    # extract all descriptors
-    descriptor_names = [desc[0] for desc in Descriptors._descList]
-
-    # number of bits for the binary fingerprints
-    nBits = 1024  # Default number of bits
-    fingerprint_names = [f'Bit_{i}' for i in range(nBits)]
-
     # create a MolecularDescriptorCalculator
+    descriptor_names = [desc[0] for desc in Descriptors._descList]
     calculator = MoleculeDescriptors.MolecularDescriptorCalculator(descriptor_names)
 
+    # number of bits for the binary fingerprints
+    nBits = 1024  # default number of bits
+    fingerprint_names = [f'Bit_{i}' for i in range(nBits)]
+    
     # VARIABLES TO SET / CAN BE MODITIED
     use_descriptors = True
     use_fingerprints = False
     add_binarized_columns = False
     cum_var_threshold = 0.8
-    label = 'ERK2_inhibition' # options: 'PKM2_inhibition', 'ERK2_inhibition' 
-    resample_method = 'smote_and_near_miss' # options: 'random_undersample', 'random_oversample', 'SMOTE', 'near_miss', 'no_resampling', 'smote_and_near_miss'
+    label = 'PKM2_inhibition' # options: 'PKM2_inhibition', 'ERK2_inhibition' 
+    resample_method = 'smote_and_near_miss' # options: 'random_undersample', 'random_oversample', 'SMOTE', 'near_miss', 'smote_and_near_miss', 'no_resampling'
     classifier_type = 'SVM' # options: 'DT', 'RF', 'LR', 'SVM'
-    iterations = 1
+    iterations = 50
 
     # read file
-    input_file = 'tested_molecules.csv'
+    input_file = 'data/tested_molecules.csv'
     df_all_info = create_dataframe(read_data(input_file), use_descriptors, use_fingerprints)
 
     # delete PKM2_inhibition and ERK2_inhibition, as these are not features 
@@ -467,13 +495,15 @@ if __name__ == '__main__':
     
     # check if there are values missing in columns
     nan_counts = df_features.columns[df_features.isnull().any()].tolist()
-    #print('The amount of columns where values are missing values is:', len(nan_counts))
+    # print('The amount of columns where values are missing values is:', len(nan_counts))
 
     # remove variables that do not provide extra information
     df_features = remove_columns_no_info(df_features)
+    make_correlation_matrix(df_features.iloc[:,1:], 'Correlation matrix of all features')
 
     # only keep important columns
     selected_features, df_features = prefilter_irrelevant_columns(df_all_info, df_features, label)
+    make_correlation_matrix(df_features, 'Correlation matrix of filtered features')
 
     # check which columns are normally distributed
     normal_distr_columns = check_normality(df_features.iloc[:, 1:]) #SMILES column cannot be checked for normality
@@ -483,25 +513,27 @@ if __name__ == '__main__':
     df_features_scaled = scale_data(df_features)
 
     # perform PCA
-    pca, num_components, df_pc_scores = perform_PCA(df_features_scaled, cum_var_threshold)
+    pca, num_components, cumulative_variance, df_pc_scores = perform_PCA(df_features_scaled, cum_var_threshold)
+    cumulative_explained_variance_graph(cumulative_variance, cum_var_threshold)
 
-    #add labels to df_pc_scores
+    # add labels to df_pc_scores
     df_pc_scores_labels = df_pc_scores.copy()
     df_pc_scores_labels['PKM2_inhibition'] = df_all_info.iloc[:, 1]
     df_pc_scores_labels['ERK2_inhibition'] = df_all_info.iloc[:, 2]
 
     # train and test chosen ML algorithm multiple times and evaluate the algorithm
-    avg_accuracy, avg_precision, avg_sensitivity, avg_specificity, conf_matrix = average_results_ML_model(df_pc_scores_labels, label, classifier_type, resample_method, iterations=iterations)
-    print(f'AVG RES: {classifier_type}, res_meth {resample_method}, fp {use_fingerprints}, bin_col {add_binarized_columns}, MODEL {label}:')
+    avg_accuracy, avg_precision, avg_sensitivity, avg_specificity, avg_neg_pred_values, conf_matrix = average_results_ML_model(df_pc_scores_labels, label, classifier_type, resample_method, iterations=iterations)
+    print(f'RESULTS: classifier - {classifier_type}, resampling method - {resample_method}, use descriptors - {use_descriptors}, use fingerprints - {use_fingerprints}, use binarizing columns - {add_binarized_columns}, inhibitor prediction - {label}:')
     print('The average accuracy is:', round(avg_accuracy, 4))
     print('The average precision is:', round(avg_precision, 4))
     print('The average sensitivity is:', round(avg_sensitivity, 4))
     print('The average specificity is:', round(avg_specificity, 4))
+    print('The average negative predictive value is:', round(avg_neg_pred_values, 4))
     print('The last predicition in the iteration had confusion matrix:\n', conf_matrix)
 
     # APPLY ML MODEL ON UNTESTED MOLECULES
     # read file
-    input_file_new = 'untested_molecules.csv'
+    input_file_new = 'data/untested_molecules.csv'
     df_all_info_new = create_dataframe(read_data(input_file), use_descriptors, use_fingerprints)
     
     # apply same preprocessing steps
@@ -515,13 +547,12 @@ if __name__ == '__main__':
     results = {'SMILES': df_all_info_new.iloc[:,0]}
     for i in ['PKM2_inhibition', 'ERK2_inhibition']:
         # make new model based on all tested molecules and predict labels untested molecules
-        # because both inhibitors work best with same settings, seperation of setting settings is not needed 
+        # because both inhibitors work best with same settings, seperation of settings is not needed 
         X_train, y_train = split_data(df_pc_scores_labels, i, resample_method, molecules='untested')
         y_pred = classifier(X_train, np.array(df_new_pc_scores), y_train, classifier_type)
         results[i] = y_pred
     
     # write output 
     results_df = pd.DataFrame(results)
-    output_file = 'predictions_untested_molecules.csv'
+    output_file = 'results/predictions_untested_molecules.csv'
     results_df.to_csv(output_file, index=False, sep=',')
-
