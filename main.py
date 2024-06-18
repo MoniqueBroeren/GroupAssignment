@@ -579,7 +579,7 @@ if __name__ == '__main__':
     input_file_new = 'data/untested_molecules.csv'
 
     # predictions for PKM2
-    df_all_info_new = create_dataframe(read_data(input_file), use_descriptors_PKM2, use_fingerprints_PKM2)
+    df_all_info_new = create_dataframe(read_data(input_file_new), use_descriptors_PKM2, use_fingerprints_PKM2)
     if add_binarized_columns_PKM2:
         df_all_info_new = binarizing_columns(df_all_info_new)
     df_features_new = pd.DataFrame(df_all_info_new, columns=selected_features_PKM2)
@@ -593,7 +593,7 @@ if __name__ == '__main__':
     results[label_PKM2] = y_pred # add prediction PKM2 to resulting dictionary
 
     # predictions for ERK2
-    df_all_info_new = create_dataframe(read_data(input_file), use_descriptors_ERK2, use_fingerprints_ERK2)
+    df_all_info_new = create_dataframe(read_data(input_file_new), use_descriptors_ERK2, use_fingerprints_ERK2)
     if add_binarized_columns_ERK2:
         df_all_info_new = binarizing_columns(df_all_info_new)
     df_features_new = pd.DataFrame(df_all_info_new, columns=selected_features_ERK2)
