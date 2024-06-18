@@ -1,36 +1,14 @@
 # GENERAL INFORMATION
 
-Author 1 <br>
-Name: Monique Broeren <br>
-Email: m.m.w.broeren@student.tue.nl <br>
-
-Author 2 <br>
-Name: Sanne van den Dungen <br>
-Email: s.k.m.v.d.dungen@student.tue.nl <br>
-
-Author 3 <br>
-Name: Fenna van Hemmen <br>
-Email: f.c.j.v.hemmen@student.tue.nl <br>
-
-Author 4 <br>
-Name: Liza Hoens <br>
-Email: l.hoens@student.tue.nl <br>
-
-Author 5 <br>
-Name: Kaj de Jong <br>
-Email: k.d.jong@student.tue.nl <br>
-
-Author 6 <br>
-Name: Nienke Sengers <br>
-Email: n.c.e.sengers@student.tue.nl <br>
-
-Author 7 <br>
-Name: Ema Topolnjak <br>
-Email: e.topolnjak@student.tue.nl <br>
-
-Author 8 <br>
-Name: Nika Vredenbregt <br>
-Email: n.vredenbregt1@student.tue.nl  <br>
+Authors: <br>
+- Monique Broeren
+- Sanne van den Dungen
+- Fenna van Hemmen 
+- Liza Hoens
+- Kaj de Jong 
+- Nienke Sengers 
+- Ema Topolnjak 
+- Nika Vredenbregt 
 
 Eindhoven University of Technology <br>
 Course: Advanced programming and biomedical data analysis <br>
